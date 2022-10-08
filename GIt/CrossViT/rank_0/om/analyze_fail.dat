@@ -1,0 +1,243 @@
+# [No.1] construct_wrapper.1
+# In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(197)/    def construct(self, x):/
+funcgraph fg_1(
+        %para1 : Tensor(F32)[3, 3, 3, 16]    # x
+        , %para2 : Ref[Tensor(F32)][16]    # 0.norm2.gamma
+        , %para3 : Ref[Tensor(F32)][16]    # 0.norm2.beta
+        , %para4 : Ref[Tensor(F32)][16]    # 0.norm1.gamma
+        , %para5 : Ref[Tensor(F32)][16]    # 0.norm1.beta
+        , %para6 : Ref[Tensor(F32)][16]    # 0.mlp.fc2.bias
+        , %para7 : Ref[Tensor(F32)][16, 16]    # 0.mlp.fc2.weight
+        , %para8 : Ref[Tensor(F32)][16]    # 0.attn.proj.bias
+        , %para9 : Ref[Tensor(F32)][16, 16]    # 0.attn.proj.weight
+        , %para10 : Ref[Tensor(F32)][16]    # 0.mlp.fc1.bias
+        , %para11 : Ref[Tensor(F32)][16, 16]    # 0.mlp.fc1.weight
+        , %para12 : Ref[Tensor(F32)][48, 16]    # 0.attn.qkv.weight
+    ) {
+
+#------------------------> 0
+    %1 = FuncGraph::fg_12(%para1)    #(Tensor(F32)[3, 3, 3, 16])    # fg_12=construct.12 #scope: Default
+#[CNode]16
+    Primitive::Return{prim_type=1}(%1)    #(Undefined) #scope: Default
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(199)/        return outs_b/#[CNode]17
+}
+# order:
+#   1: construct_wrapper.1:[CNode]16{[0]: ValueNode<FuncGraph> construct.12, [1]: x}
+#   2: construct_wrapper.1:[CNode]17{[0]: ValueNode<Primitive> Return, [1]: [CNode]16}
+
+
+# [No.2] construct.12
+# In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(197)/    def construct(self, x):/
+funcgraph fg_12[fg_1](
+        %para13 : Tensor(F32)[3, 3, 3, 16]    # x
+    ) {
+    %1 : Tuple[Func] = Primitive::MakeTuple{prim_type=1}(FuncGraph::fg_13)    #(Func)    # fg_13=construct.13 #scope: Default
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(198)/        outs_b = self.blocks[0](x)/#[CNode]18
+    %2 : Func = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%1, I64(0))    #(Tuple[Func], I64) #scope: Default
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(198)/        outs_b = self.blocks[0](x)/#[CNode]19
+
+#------------------------> 1
+    %3 = %2(%para13)    #(Tensor(F32)[3, 3, 3, 16]) #scope: Default
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(198)/        outs_b = self.blocks[0](x)/#outs_b
+    Primitive::Return{prim_type=1}(%3)    #(Undefined) #scope: Default
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\new.py(199)/        return outs_b/#[CNode]20
+}
+# order:
+#   1: construct.12:[CNode]19{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]18, [2]: ValueNode<Int64Imm> 0}
+#   2: construct.12:outs_b{[0]: [CNode]19, [1]: x}
+#   3: construct.12:[CNode]20{[0]: ValueNode<Primitive> Return, [1]: outs_b}
+
+
+# [No.3] construct.13
+# In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(56)/    def construct(self, x):/
+funcgraph fg_13[fg_1](
+        %para14 : Tensor(F32)[3, 3, 3, 16]    # x
+    ) {
+    %1 : Tensor(F32)[3, 3, 3, 16] = FuncGraph::fg_21(%para14)    #(Tensor(F32)[3, 3, 3, 16])    # fg_21=construct.21 #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(57)/        x = x + self.drop_path(self.attn(self.norm1(x)))/#[CNode]22
+
+#------------------------> 2
+    %2 = FuncGraph::fg_14(%1)    #(Tensor(F32)[3, 3, 3, 16])    # fg_14=construct.14 #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(57)/        x = x + self.drop_path(self.attn(self.norm1(x)))/#[CNode]23
+    %3 = FuncGraph::fg_24(%2)    #(Undefined)    # fg_24=construct.24 #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(57)/        x = x + self.drop_path(self.attn(self.norm1(x)))/#[CNode]25
+    %4 = DoSignaturePrimitive::S-Prim-add{prim_type=1}(%para14, %3)    #(Tensor(F32)[3, 3, 3, 16], Undefined) #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(57)/        x = x + self.drop_path(self.attn(self.norm1(x)))/#x
+    %5 = FuncGraph::fg_26(%4)    #(Undefined)    # fg_26=construct.26 #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(58)/        x = x + self.drop_path(self.mlp(self.norm2(x)))/#[CNode]27
+    %6 = FuncGraph::fg_28(%5)    #(Undefined)    # fg_28=construct.28 #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(58)/        x = x + self.drop_path(self.mlp(self.norm2(x)))/#[CNode]29
+    %7 = FuncGraph::fg_24(%6)    #(Undefined)    # fg_24=construct.24 #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(58)/        x = x + self.drop_path(self.mlp(self.norm2(x)))/#[CNode]30
+    %8 = DoSignaturePrimitive::S-Prim-add{prim_type=1}(%4, %7)    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(58)/        x = x + self.drop_path(self.mlp(self.norm2(x)))/#x
+    Primitive::Return{prim_type=1}(%8)    #(Undefined) #scope: Default/blocks-CellList/0-Block
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(60)/        return x/#[CNode]31
+}
+# order:
+#   1: construct.13:[CNode]22{[0]: ValueNode<FuncGraph> construct.21, [1]: x}
+#   2: construct.13:[CNode]23{[0]: ValueNode<FuncGraph> construct.14, [1]: [CNode]22}
+#   3: construct.13:[CNode]25{[0]: ValueNode<FuncGraph> construct.24, [1]: [CNode]23}
+#   4: construct.13:x{[0]: ValueNode<DoSignaturePrimitive> S-Prim-add, [1]: x, [2]: [CNode]25}
+#   5: construct.13:[CNode]27{[0]: ValueNode<FuncGraph> construct.26, [1]: x}
+#   6: construct.13:[CNode]29{[0]: ValueNode<FuncGraph> construct.28, [1]: [CNode]27}
+#   7: construct.13:[CNode]30{[0]: ValueNode<FuncGraph> construct.24, [1]: [CNode]29}
+#   8: construct.13:x{[0]: ValueNode<DoSignaturePrimitive> S-Prim-add, [1]: x, [2]: [CNode]30}
+#   9: construct.13:[CNode]31{[0]: ValueNode<Primitive> Return, [1]: x}
+
+
+# [No.4] construct.14
+# In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(20)/    def construct(self, x):/
+funcgraph fg_14[fg_1](
+        %para15 : Tensor(F32)[3, 3, 3, 16]    # x
+    ) {
+    %1 : Func = ClassType() #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(33)/        batchmatual2=ops.BatchMatMul()/#batchmatual2
+    %2 : Func = ClassType() #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(29)/        softmax = nn.Softmax()/#softmax
+    %3 : Tuple[String] = DoSignaturePrimitive::S-Prim-MakeTuple{prim_type=1}("transpose_b")    #(String) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(27)/        batchmatual = ops.BatchMatMul(transpose_b=True)/#[CNode]32
+    %4 : Tuple[Bool] = DoSignaturePrimitive::S-Prim-MakeTuple{prim_type=1}(Bool(1))    #(Bool) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(27)/        batchmatual = ops.BatchMatMul(transpose_b=True)/#[CNode]33
+    %5 : Dictionary[[transpose_b,],[Bool]] = DoSignaturePrimitive::S-Prim-make_dict{prim_type=1}(%3, %4)    #(Tuple[String], Tuple[Bool]) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(27)/        batchmatual = ops.BatchMatMul(transpose_b=True)/#[CNode]34
+    %6 : Func = UnpackCall::unpack_call(ClassType, %5)    #(Func, Dictionary[[transpose_b,],[Bool]]) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(27)/        batchmatual = ops.BatchMatMul(transpose_b=True)/#batchmatual
+    %7 : Tensor(F32)[3, 3, 3, 48] = FuncGraph::fg_35(%para15)    #(Tensor(F32)[3, 3, 3, 16])    # fg_35=construct.35 #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(22)/        qkv = self.qkv(x)/#qkv
+    %8 : Func = Primitive::getattr{prim_type=1}(%7, "reshape")    #(Tensor(F32)[3, 3, 3, 48], String) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(23)/        qkv = qkv.reshape(B, N, 3, self.num_heads, C // self.num_heads)/#[CNode]36
+    %9 : Tuple[I64*4] = Primitive::getattr{prim_type=1}(%para15, "shape")    #(Tensor(F32)[3, 3, 3, 16], String) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(21)/        B, N, C = x.shape/#[CNode]37
+    %10 : I64 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%9, I64(0))    #(Tuple[I64*4], I64) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(21)/        B, N, C = x.shape/#B
+    %11 : I64 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%9, I64(1))    #(Tuple[I64*4], I64) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(21)/        B, N, C = x.shape/#N
+    %12 : I64 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%9, I64(2))    #(Tuple[I64*4], I64) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(21)/        B, N, C = x.shape/#C
+    %13 : I64 = DoSignaturePrimitive::S-Prim-floordiv{prim_type=1}(%12, I64(1))    #(I64, I64) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(23)/        qkv = qkv.reshape(B, N, 3, self.num_heads, C // self.num_heads)/#[CNode]38
+
+#------------------------> 3
+    %14 = %8(%10, %11, I64(3), I64(1), %13)    #(I64, I64, I64, I64, I64) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(23)/        qkv = qkv.reshape(B, N, 3, self.num_heads, C // self.num_heads)/#qkv
+    %15 = DoSignaturePrimitive::S-Prim-MakeTuple{prim_type=1}(I64(2), I64(0), I64(3), I64(1), I64(4))    #(Undefined, Undefined, Undefined, Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(24)/        qkv = ops.transpose(qkv, (2, 0, 3, 1, 4))/#[CNode]39
+    %16 = DoSignaturePrimitive::S-Prim-Transpose{prim_type=1}[output_names=["output"], input_names=["x", "perm"]](%14, %15)    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(24)/        qkv = ops.transpose(qkv, (2, 0, 3, 1, 4))/#qkv
+    %17 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%16, I64(0))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#[CNode]40
+    %18 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%16, I64(1))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#[CNode]41
+    %19 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%16, I64(2))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#[CNode]42
+    %20 = DoSignaturePrimitive::S-Prim-MakeTuple{prim_type=1}(%17, %18, %19)    #(Undefined, Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#[CNode]43
+    %21 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%20, I64(0))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#q
+    %22 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%20, I64(1))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#k
+    %23 = %6(%21, %22)    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(28)/        attn = batchmatual(q, k) * self.scale/#[CNode]44
+    %24 = DoSignaturePrimitive::S-Prim-mul{prim_type=1}(%23, F32(0.25))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(28)/        attn = batchmatual(q, k) * self.scale/#attn
+    %25 = %2(%24)    #(Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(30)/        attn = softmax(attn)/#attn
+    %26 = FuncGraph::fg_45(%25)    #(Undefined)    # fg_45=construct.45 #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(31)/        attn = self.attn_drop(attn)/#attn
+    %27 = DoSignaturePrimitive::S-Prim-getitem{prim_type=1}(%20, I64(2))    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(25)/        q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)/#v
+    %28 = %1(%26, %27)    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(34)/        x=batchmatual2(attn,v)/#x
+    %29 = DoSignaturePrimitive::S-Prim-MakeTuple{prim_type=1}(I64(0), I64(2), I64(1), I64(3))    #(Undefined, Undefined, Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(35)/        x = ops.transpose(x, (0, 2, 1, 3))/#[CNode]46
+    %30 = DoSignaturePrimitive::S-Prim-Transpose{prim_type=1}[output_names=["output"], input_names=["x", "perm"]](%28, %29)    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(35)/        x = ops.transpose(x, (0, 2, 1, 3))/#x
+    %31 = Primitive::getattr{prim_type=1}(%30, "reshape")    #(Undefined, Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(36)/        x = x.reshape(B, N, C)/#[CNode]47
+    %32 = %31(%10, %11, %12)    #(I64, I64, I64) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(36)/        x = x.reshape(B, N, C)/#x
+    %33 = FuncGraph::fg_48(%32)    #(Undefined)    # fg_48=construct.48 #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(37)/        x = self.proj(x)/#x
+    %34 = FuncGraph::fg_49(%33)    #(Undefined)    # fg_49=construct.49 #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(38)/        x = self.proj_drop(x)/#x
+    Primitive::Return{prim_type=1}(%34)    #(Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file C:\Users\zhao1\PycharmProjects\crossvitms\Block.py(39)/        return x/#[CNode]50
+}
+# order:
+#   1: construct.14:[CNode]37{[0]: ValueNode<Primitive> getattr, [1]: x, [2]: ValueNode<StringImm> shape}
+#   2: construct.14:B{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]37, [2]: ValueNode<Int64Imm> 0}
+#   3: construct.14:N{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]37, [2]: ValueNode<Int64Imm> 1}
+#   4: construct.14:C{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]37, [2]: ValueNode<Int64Imm> 2}
+#   5: construct.14:qkv{[0]: ValueNode<FuncGraph> construct.35, [1]: x}
+#   6: construct.14:[CNode]36{[0]: ValueNode<Primitive> getattr, [1]: qkv, [2]: ValueNode<StringImm> reshape}
+#   7: construct.14:[CNode]38{[0]: ValueNode<DoSignaturePrimitive> S-Prim-floordiv, [1]: C, [2]: ValueNode<Int64Imm> 1}
+#   8: construct.14:qkv{[0]: [CNode]36, [1]: B, [2]: N, [3]: ValueNode<Int64Imm> 3, [4]: ValueNode<Int64Imm> 1, [5]: [CNode]38}
+#   9: construct.14:[CNode]39{[0]: ValueNode<DoSignaturePrimitive> S-Prim-MakeTuple, [1]: ValueNode<Int64Imm> 2, [2]: ValueNode<Int64Imm> 0, [3]: ValueNode<Int64Imm> 3, [4]: ValueNode<Int64Imm> 1, [5]: ValueNode<Int64Imm> 4}
+#  10: construct.14:qkv{[0]: ValueNode<DoSignaturePrimitive> S-Prim-Transpose, [1]: qkv, [2]: [CNode]39}
+#  11: construct.14:[CNode]40{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: qkv, [2]: ValueNode<Int64Imm> 0}
+#  12: construct.14:[CNode]41{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: qkv, [2]: ValueNode<Int64Imm> 1}
+#  13: construct.14:[CNode]42{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: qkv, [2]: ValueNode<Int64Imm> 2}
+#  14: construct.14:[CNode]43{[0]: ValueNode<DoSignaturePrimitive> S-Prim-MakeTuple, [1]: [CNode]40, [2]: [CNode]41, [3]: [CNode]42}
+#  15: construct.14:q{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]43, [2]: ValueNode<Int64Imm> 0}
+#  16: construct.14:k{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]43, [2]: ValueNode<Int64Imm> 1}
+#  17: construct.14:v{[0]: ValueNode<DoSignaturePrimitive> S-Prim-getitem, [1]: [CNode]43, [2]: ValueNode<Int64Imm> 2}
+#  18: construct.14:[CNode]32{[0]: ValueNode<DoSignaturePrimitive> S-Prim-MakeTuple, [1]: ValueNode<StringImm> transpose_b}
+#  19: construct.14:[CNode]33{[0]: ValueNode<DoSignaturePrimitive> S-Prim-MakeTuple, [1]: ValueNode<BoolImm> true}
+#  20: construct.14:[CNode]34{[0]: ValueNode<DoSignaturePrimitive> S-Prim-make_dict, [1]: [CNode]32, [2]: [CNode]33}
+#  21: construct.14:batchmatual{[0]: ValueNode<UnpackCall> unpack_call.51, [1]: ValueNode<ClassType> class 'mindspore.ops.operations.math_ops.BatchMatMul', [2]: [CNode]34}
+#  22: construct.14:[CNode]44{[0]: batchmatual, [1]: q, [2]: k}
+#  23: construct.14:attn{[0]: ValueNode<DoSignaturePrimitive> S-Prim-mul, [1]: [CNode]44, [2]: ValueNode<FP32Imm> 0.250000}
+#  24: construct.14:softmax{[0]: ValueNode<ClassType> class 'mindspore.nn.layer.activation.Softmax'}
+#  25: construct.14:attn{[0]: softmax, [1]: attn}
+#  26: construct.14:attn{[0]: ValueNode<FuncGraph> construct.45, [1]: attn}
+#  27: construct.14:batchmatual2{[0]: ValueNode<ClassType> class 'mindspore.ops.operations.math_ops.BatchMatMul'}
+#  28: construct.14:x{[0]: batchmatual2, [1]: attn, [2]: v}
+#  29: construct.14:[CNode]46{[0]: ValueNode<DoSignaturePrimitive> S-Prim-MakeTuple, [1]: ValueNode<Int64Imm> 0, [2]: ValueNode<Int64Imm> 2, [3]: ValueNode<Int64Imm> 1, [4]: ValueNode<Int64Imm> 3}
+#  30: construct.14:x{[0]: ValueNode<DoSignaturePrimitive> S-Prim-Transpose, [1]: x, [2]: [CNode]46}
+#  31: construct.14:[CNode]47{[0]: ValueNode<Primitive> getattr, [1]: x, [2]: ValueNode<StringImm> reshape}
+#  32: construct.14:x{[0]: [CNode]47, [1]: B, [2]: N, [3]: C}
+#  33: construct.14:x{[0]: ValueNode<FuncGraph> construct.48, [1]: x}
+#  34: construct.14:x{[0]: ValueNode<FuncGraph> construct.49, [1]: x}
+#  35: construct.14:[CNode]50{[0]: ValueNode<Primitive> Return, [1]: x}
+
+
+# [No.5] reshape.15
+# In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(266)/def reshape(x, *shape):/
+funcgraph fg_15(
+        %para16 : Tensor(F32)[3, 3, 3, 48]    # x
+        , %para17 : I64    # shape0
+        , %para18 : I64    # shape1
+        , %para19 : I64    # shape2
+        , %para20 : I64    # shape3
+        , %para21 : I64    # shape4
+    ) {
+    %1 : ExternalType = Primitive::resolve{prim_type=1}(NameSpace::SymbolStr, F)    #(ExternalType, ExternalType) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(297)/    return F.reshape(x, new_shape)/#[CNode]52
+    %2 : Func = Primitive::getattr{prim_type=1}(%1, "reshape")    #(ExternalType, String) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(297)/    return F.reshape(x, new_shape)/#[CNode]53
+    %3 : Func = Primitive::resolve{prim_type=1}(NameSpace::SymbolStr, check_reshape_shp_const)    #(ExternalType, ExternalType) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(296)/    new_shape = check_reshape_shp_const(shape)/#[CNode]54
+    %4 : Tuple[I64*5] = Primitive::MakeTuple{prim_type=1}(%para17, %para18, %para19, %para20, %para21)    #(I64, I64, I64, I64, I64) #scope: Default
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(266)/def reshape(x, *shape):/#[CNode]55
+    %5 : Tuple[I64*5] = %3(%4)    #(Tuple[I64*5]) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(296)/    new_shape = check_reshape_shp_const(shape)/#new_shape
+
+#------------------------> 4
+    %6 = %2(%para16, %5)    #(Tensor(F32)[3, 3, 3, 48], Tuple[I64*5]) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(297)/    return F.reshape(x, new_shape)/#[CNode]56
+    Primitive::Return{prim_type=1}(%6)    #(Undefined) #scope: Default/blocks-CellList/0-Block/attn-Attention
+      # In file F:\anaconda3\envs\mindspore1.7_py39\lib\site-packages\mindspore\_extends\parse\standard_method.py(297)/    return F.reshape(x, new_shape)/#[CNode]57
+}
+# order:
+#   1: reshape.11:[CNode]58{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore._extends.parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   2: reshape.11:[CNode]59{[0]: [CNode]58, [1]: shape}
+#   3: reshape.15:new_shape{[0]: [CNode]54, [1]: [CNode]55}
+#   4: reshape.11:[CNode]60{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore._extends.parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   5: reshape.11:[CNode]61{[0]: [CNode]60, [1]: x, [2]: new_shape}
+#   6: reshape.15:[CNode]56{[0]: [CNode]53, [1]: x, [2]: new_shape}
+#   7: reshape.15:[CNode]57{[0]: ValueNode<Primitive> Return, [1]: [CNode]56}
+
+
+#===============================================================================
+# num of function graphs in stack: 5/6 (Ignored 1 internal frames).
