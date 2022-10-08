@@ -264,7 +264,6 @@ class MultiScaleBlock(nn.Cell):
         return outs
 
 
-# 既然动态图没有报错，那么接着往下编写了
 net3 = MultiScaleBlock(dim=(192,), patches=[400], depth=[1,  0,], num_heads=[6], mlp_ratio=(2, 2),
                        qkv_bias=False, qk_scale=None, drop=0, attn_drop=0,
                        norm_layer=nn.LayerNorm)

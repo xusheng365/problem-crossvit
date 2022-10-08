@@ -45,6 +45,7 @@ class Block(nn.Cell):
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
         super().__init__()
         #print(222222)
+        print(dim)
         self.norm1 = norm_layer((dim,))
         self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here

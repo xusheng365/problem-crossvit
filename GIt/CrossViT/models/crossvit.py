@@ -190,18 +190,18 @@ class MultiScaleBlock(nn.Cell):
     def __init__(self, dim, patches, depth, num_heads, mlp_ratio, qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
         super().__init__()
-        print(dim)  # 输出正确
+        #print(dim)  # 输出正确
         num_branches = len(dim)
         self.num_branches = num_branches
         # different branch could have different embedding size, the first one is the base
         for d in range(num_branches):
             for i in range(depth[d]):
                 if d == 0 and i == 0:
-                    self.blocks=nn.SequentialCell([Block(dim=dim, num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
+                    self.blocks=nn.SequentialCell([Block(dim=dim[d], num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
                                drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1], norm_layer=norm_layer)])
                 else:
                     self.blocks.append((nn.SequentialCell(  # 修改严重仔细查看,还没有进行，输入block，但是要求list和字典，加上括号，转换成list
-                        [Block(dim=dim, num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
+                        [Block(dim=dim[d], num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
                                drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1], norm_layer=norm_layer)]))[0])
 
         if len(self.blocks) == 0:
@@ -266,7 +266,7 @@ class MultiScaleBlock(nn.Cell):
             #     print(block)
 
     def construct(self, x):
-        print(x)
+        #print(x)
         outs_b = [block(x_) for x_, block in zip(x, self.blocks)]
         # only take the cls token out
         proj_cls_token = [proj(x[:, 0:1]) for x, proj in zip(outs_b, self.projs)]
@@ -290,7 +290,7 @@ net3 = MultiScaleBlock(dim=(16,), patches=2, depth=[1], num_heads=[1], mlp_ratio
 #print(net3.parameters_dict())
 x = ms.Tensor(np.ones((3, 3, 3, 16)), ms.float32)
 x = net3(x).shape
-print(net3)
+# print(net3)
 
 #
 # def _compute_num_patches(img_size, patches):
