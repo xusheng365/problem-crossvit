@@ -1,8 +1,8 @@
 import mindspore.nn as nn
 from mindspore import ops
 
-from drop_path import DropPath
-from mlp import Mlp
+from models.drop_path import DropPath
+from models.mlp import Mlp
 
 
 class Attention(nn.Cell):
@@ -46,12 +46,13 @@ class Block(nn.Cell):
         super().__init__()
         #print(222222)
         #print(dim)
-        self.norm1 = norm_layer((dim,))
+        self.norm1 = norm_layer((dim,), epsilon=1e-6)
         self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
-        #print(drop_path)
+        #print("drop_path",drop_path)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else ops.Identity()
-        self.norm2 = norm_layer((dim,))
+        #print("self.drop_path",self.drop_path)
+        self.norm2 = norm_layer((dim,), epsilon=1e-6)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 

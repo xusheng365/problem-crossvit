@@ -1,20 +1,21 @@
 import mindspore.nn as nn
 import mindspore as ms
 import mindspore.ops as ops
-import mindspore.numpy as np
+import numpy as np
 from mindspore import Tensor
 from mindspore import dtype as mstype
-from Block import Block
-from Identity import Identity
-from drop_path import DropPath
-from helpers import to_2tuple
-from mlp import Mlp
+from models.Block import Block
+from models.Identity import Identity
+from models.drop_path import DropPath
+from models.helpers import to_2tuple
+from models.mlp import Mlp
 import mindspore.common.initializer as init
 from mindspore.common.initializer import TruncatedNormal
-# 动态图的配置
-from mindspore import context
+from mindspore import ms_function
 
-context.set_context(mode=context.PYNATIVE_MODE)
+# 动态图的配置
+# from mindspore import context
+# context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class PatchEmbed(nn.Cell):
@@ -53,12 +54,8 @@ class PatchEmbed(nn.Cell):
         B, C, H, W = x.shape  # x的四维
         # FIXME look at relaxing size constraints
 
-        # assert H == self.img_size[0] and W == self.img_size[1], \
-        # f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
         x = self.proj(x)
-        # print(x)
         B, C, H, W = x.shape
-        # print(B,C,H,W)
         x = x.reshape(B, C, H * W)
         x = ops.transpose(x, (0, 2, 1))
         return x  # 修改，输出结果的shape大小相同，但是数据不相同
@@ -117,22 +114,11 @@ class CrossAttention(nn.Cell):  # 交叉注意力的算法
 
         batchmatual2 = ops.BatchMatMul()
         x = batchmatual2(attn, v)
-        # print(attn.shape)
-        # print(v.shape)
-        # print(x.shape)
 
         x = ops.transpose(x, (0, 2, 1, 3))
         x = x.reshape(B, 1, C)
-        # print(x.shape)
-
-        # print(x)
-        # x = (attn @ v).transpose(1, 2).reshape(B, 1, C)  # (BH1N @ BHN(C/H)) -> BH1(C/H) -> B1H(C/H) -> B1C
         x = self.proj(x)
-        # print(111111)
-        # print(x)
         x = self.proj_drop(x)
-        # print(x.shape)
-        # print(2222)
 
         return x
 
@@ -150,10 +136,8 @@ class CrossAttentionBlock(nn.Cell):
         super().__init__()
 
         self.norm1 = norm_layer((dim,))
-        # print(self.norm1(x))
         self.attn = CrossAttention(
             dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
-        # print(self.attn(self.norm1(x)))
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
         self.drop_path = DropPath(drop_path) if drop_path > 0. else Identity()
         self.has_mlp = has_mlp
@@ -172,12 +156,12 @@ class CrossAttentionBlock(nn.Cell):
         return x
 
 
-#
+
 # x = ms.Tensor(np.ones((3, 3, 16)), ms.float32)
 # #print(x.shape)
 # net3 = CrossAttentionBlock(dim=16, num_heads=4)
 # x = net3(x)
-# #print(x)
+#print(x)
 # 经过检测，目前前三个函数的输出shape没有问题
 
 
@@ -202,20 +186,9 @@ class MultiScaleBlock(nn.Cell):
             self.blocks = None
         else:
             self.blocks = nn.CellList(blocks)
+        #for block in self.blocks:
+            #print(block)
 
-        # self.ccc = nn.CellList()
-        # for d in range(num_branches):
-        #     tmp = []
-        #     for i in range(depth[d]):
-        #         tmp.append(
-        #             Block(dim=dim[d], num_heads=num_heads[d], mlp_ratio=mlp_ratio[d], qkv_bias=qkv_bias,
-        #                   drop=drop, attn_drop=attn_drop, drop_path=drop_path[-1], norm_layer=norm_layer))
-        #     if len(tmp) != 0:
-        #         self.ccc.append(nn.SequentialCell(tmp))  # sequential只能使用列表或者字典进行添加，可以使用类的列表添加
-        # if len(self.ccc) == 0:
-        #     self.ccc = None
-        #
-        # print(self.ccc)  #从输出来看，结构形式是一模一样的
         projs = []
         for d in range(num_branches):
             if dim[d] == dim[(d + 1) % num_branches] and False:
@@ -256,21 +229,29 @@ class MultiScaleBlock(nn.Cell):
             revert_projs.append(nn.SequentialCell(tmp))
         self.revert_projs = nn.CellList(revert_projs)
 
+    #@ms_function()
     def construct(self, x):
-        print(x)
-        print(self.blocks)
-        outs_b = [block(x_) for x_, block in zip(x, self.blocks)]  # 虽然我不知道对不对，但是通过celllist直接添加类，并且加上名字能运行
+        #print(x)
+        #x = [x,]  #加上【】，现在动态图是可以运行的，静态图也可以跑通
+        outs_b = []
+        i = 0
+        for block in self.blocks:
+            outs_b.append(block(x[i]))
+            i = i+1
+        #outs_b = [block(x_) for x_, block in zip(x, self.blocks)]
         # only take the cls token out
-        proj_cls_token = [proj(x[:, 0:1]) for x, proj in zip(outs_b, self.projs)]
+        proj_cls_token = []
+        j = 0
+        for proj in self.projs:
+            proj_cls_token.append(proj(outs_b[j][:, 0:1]))
+            j = j+1
+
+        #proj_cls_token = [proj(x[:, 0:1]) for x, proj in zip(outs_b, self.projs)]
         # cross attention
         outs = []
         for i in range(self.num_branches):
-            # print(proj_cls_token[i].shape)
-            # print(outs_b[(i + 1) % self.num_branches][:, 1:, ...].shape)
             a = proj_cls_token[i]
-            # print(type(a))
             b = outs_b[(i + 1) % self.num_branches][:, 1:, ...]
-            # print(type(b))
             con = ops.Concat(1)
             tmp = con((a, b))
             tmp = self.fusion[i](tmp)
@@ -283,11 +264,12 @@ class MultiScaleBlock(nn.Cell):
 # net3 = MultiScaleBlock(dim=(192,), patches=[400], depth=[1, 0], num_heads=[6], mlp_ratio=(2, 2),
 #                        qkv_bias=False, drop_path=[0.5, 0.5], qk_scale=None, drop=0, attn_drop=0,
 #                        norm_layer=nn.LayerNorm)
-# for name, param in net3.parameters_and_names():
-#     print(name, param)
-# x = ms.Tensor(np.ones((3, 3, 192, 192)), ms.float32)
+# # for name, param in net3.parameters_and_names():
+# #     print(name, param)
+# x = ms.Tensor(np.ones((3, 192, 192)), ms.float32)
 # x = net3(x)
 # print(x)
+#静态图可以跑通
 
 
 def _compute_num_patches(img_size, patches):
@@ -323,12 +305,10 @@ class VisionTransformer(nn.Cell):
         if hybrid_backbone is None:  # 循环修改，因为tuple只接受元祖，并且元祖无法改变元祖内的元素
             b = []
             for i in range(self.num_branches):
-                c = ms.Parameter(Tensor(np.zeros([1, 1 + num_patches[i], embed_dim[i]], np.float32)), name=str(i))
+                c = ms.Parameter(Tensor(np.zeros([1, 1 + num_patches[i], embed_dim[i]], np.float32)), name=str(i + 100))
                 b.append(c)
             b = tuple(b)
             self.pos_embed = ms.ParameterTuple(b)
-            # self.pos_embed = ms.ParameterTuple(
-            #     tuple([ms.Parameter(ops.Zeros(1, 1 + num_patches[i], embed_dim[i])) for i in range(self.num_branches)]))
             for im_s, p, d in zip(img_size, patch_size, embed_dim):
                 patch_embed.append(
                     PatchEmbed(img_size=im_s, patch_size=p, in_chans=in_chans, embed_dim=d, multi_conv=multi_conv))
@@ -341,7 +321,7 @@ class VisionTransformer(nn.Cell):
             for idx, (im_s, p, d) in enumerate(zip(img_size, patch_size, embed_dim)):
                 patch_embed.append(T2T(im_s, tokens_type=tokens_type, patch_size=p, embed_dim=d))
                 c = ms.Parameter(get_sinusoid_encoding(n_position=1 + num_patches[idx], d_hid=embed_dim[idx]),
-                                 name=str(idx), requires_grad=False)
+                                 name=str(idx + 500), requires_grad=False)
                 b.append(c)
             self.patch_embed = nn.CellList(patch_embed)
             b = tuple(b)
@@ -350,7 +330,7 @@ class VisionTransformer(nn.Cell):
             del self.pos_embed
             b = []  # 修改
             for i in range(self.num_branches):
-                c = ms.Parameter(Tensor(np.zeros([1, 1 + num_patches[i], embed_dim[i]], np.float32)), name=str(i))
+                c = ms.Parameter(Tensor(np.zeros([1, 1 + num_patches[i], embed_dim[i]], np.float32)), name=str(i + 200))
                 b.append(c)
             b = tuple(b)
             self.pos_embed = ms.ParameterTuple(b)
@@ -358,12 +338,13 @@ class VisionTransformer(nn.Cell):
         d = []
         for i in range(self.num_branches):  # 修改
             # print("i ",i)
-            c = ms.Parameter(Tensor(np.zeros([1, 1, embed_dim[i]], np.float32)), name=str(i))
+            c = ms.Parameter(Tensor(np.zeros([1, 1, embed_dim[i]], np.float32)), name=str(i + 300))
             d.append(c)
         # print(d)
         d = tuple(d)
+
         self.cls_token = ms.ParameterTuple(d)
-        print(self.cls_token)
+        # print(self.cls_token)
         self.pos_drop = nn.Dropout(1.0 - drop_rate)
 
         total_depth = sum([sum(x[-2:]) for x in depth])
@@ -376,8 +357,6 @@ class VisionTransformer(nn.Cell):
         for idx, block_cfg in enumerate(depth):
             curr_depth = max(block_cfg[:-1]) + block_cfg[-1]
             dpr_ = dpr[dpr_ptr:dpr_ptr + curr_depth]
-            # print(dpr_) 四个元素，均为0
-            # print(block_cfg)
             blk = MultiScaleBlock(embed_dim, num_patches, block_cfg, num_heads=num_heads, mlp_ratio=mlp_ratio,
                                   qkv_bias=qkv_bias, qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate,
                                   drop_path=dpr_,
@@ -390,25 +369,17 @@ class VisionTransformer(nn.Cell):
                                  range(self.num_branches)])
 
         for i in range(self.num_branches):
-            # print(type(self.pos_embed[i]))
             if self.pos_embed[i].requires_grad:
-                # print(Tensor(init.TruncatedNormal(sigma=.02), self.pos_embed[i].data.shape),ms.float32)
-                # print(self.pos_embed[i])  # 是一个parameter需要进行初始化
                 tensor1 = init.initializer(TruncatedNormal(sigma=.02), self.pos_embed[i].data.shape, ms.float32)
-                # print(tensor1) 经过验证，tensor是一个tensor类型
-                # self.pos_embed[i].set_data(
-                #     init.initializear(TruncatedNormal(sigma=.02), self.pos_embed[i].data.shape))
                 self.pos_embed[i].set_data(tensor1)
             tensor2 = init.initializer(TruncatedNormal(sigma=.02), self.cls_token[i].data.shape, ms.float32)
-            # print(self.cls_token[i])
-            # tensor2 = init.initializear(TruncatedNormal(sigma=.02), self.cls_token[i].data.shape, ms.float32)
             self.cls_token[i].set_data(tensor2)
-            # self.pos_embed[i].set_data(init.initializear(TruncatedNormal(sigma=.02), self.cls_token[i].data.shape))
 
-        self._init_weights()
+        #self._init_weights()
 
     def _init_weights(self) -> None:
         for _, cell in self.cells_and_names():
+            # print(_,cell)
             if isinstance(cell, nn.Dense):
                 cell.weight.set_data(init.initializer(init.TruncatedNormal(sigma=.02), cell.weight.data.shape))
                 if cell.bias is not None:
@@ -435,40 +406,21 @@ class VisionTransformer(nn.Cell):
         xs = []
         # print(x)
         for i in range(self.num_branches):
-            print(i, self.num_branches)
-            print(self.cls_token[i])
             resize_bilinear = nn.ResizeBilinear()  # 将cubic插值转换为线性插值
             x_ = resize_bilinear(x, size=(self.img_size[i], self.img_size[i])) if H != self.img_size[i] else x
-            print(i, " yes1")
             tmp = self.patch_embed[i](x_)
-            print(i, " yes2")
             z = self.cls_token[i].shape
-            print(i, " yes3")
             y = Tensor(np.ones((B, z[1], z[2])), dtype=mstype.float32)
-            print(i, " yes4")
-            print(z)
-            print(self.cls_token[i])
-            print(y.shape)
             cls_tokens = self.cls_token[i]
             cls_tokens = cls_tokens.expand_as(y)  # stole cls_tokens impl from Phil Wang, thanks
-            # print(cls_tokens.shape)
-            print(cls_tokens)
-            print(i, " yes5")
             con = ops.Concat(1)
-            # print(type(tmp))
-            # print(type(cls_tokens))
-            print(i, " yes6")
             tmp = con((cls_tokens, tmp))
-            print(i, " yes7")
             tmp = tmp + self.pos_embed[i]
-            print(i, " yes8")
             tmp = self.pos_drop(tmp)
-            print(i, " yes9")
             xs.append(tmp)
-            print(222222)
+
 
         for blk in self.blocks:
-            print(333333)
             xs = blk(xs)
 
         # NOTE: was before branch token section, move to here to assure all branch token are before layer norm
@@ -479,13 +431,11 @@ class VisionTransformer(nn.Cell):
 
     def construct(self, x):
         xs = self.forward_features(x)
-        # print(11111)
         ce_logits = [self.head[i](x) for i, x in enumerate(xs)]
-        # print(len(ce_logits))
-        # op = ops.ReduceMean(keep_dims=False)
-        # z = ops.stack(ce_logits, 0)
-        # ce_logits=op(z, 0)
-        # ce_logits = ops.ReduceMean(ops.stack(ce_logits, 0), 0)
+        z = ops.stack([ce_logits[0], ce_logits[1]])
+        op = ops.ReduceMean(keep_dims=False)
+        ce_logits = op(z, 0)
+
         return ce_logits
 
 
@@ -494,16 +444,155 @@ class VisionTransformer(nn.Cell):
 #                               num_heads=[3, 3], mlp_ratio=[4, 4, 1], qkv_bias=True,
 #                               norm_layer=nn.LayerNorm)
 
-net4 = VisionTransformer(img_size=[240],
-                         patch_size=[12], embed_dim=[192], depth=[[1, 4, 0]],
-                         num_heads=[3], mlp_ratio=[4], qkv_bias=True,
-                         norm_layer=nn.LayerNorm)
-
-# net4 = VisionTransformer(img_size=[240, 224],
-#                          patch_size=[12, 16], embed_dim=[8, 8], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
-#                          num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True,
+# net4 = VisionTransformer(img_size=[240],
+#                          patch_size=[12], embed_dim=[192], depth=[[1, 4, 0]],
+#                          num_heads=[3], mlp_ratio=[4], qkv_bias=True,
 #                          norm_layer=nn.LayerNorm)
 
+net4 = VisionTransformer(img_size=[240, 224],
+                         patch_size=[12, 16], embed_dim=[96, 192], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+                         num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True,
+                         norm_layer=nn.LayerNorm)
+
+# for name, param in net4.parameters_and_names():
+#     print(name, param)
 x = ms.Tensor(np.ones((3, 3, 1, 16)), ms.float32)
 out = net4(x)
 print(out)
+
+# def crossvit_tiny_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[96, 192], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+#                               num_heads=[3, 3], mlp_ratio=[4, 4, 1], qkv_bias=True,
+#                               norm_layer=nn.LayerNorm, eps=1e-6, **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_tiny_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+
+# @register_model
+# def crossvit_small_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+#                               num_heads=[6, 6], mlp_ratio=[4, 4, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_small_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+#
+# @register_model
+# def crossvit_base_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[384, 768], depth=[[1, 4, 0], [1, 4, 0], [1, 4, 0]],
+#                               num_heads=[12, 12], mlp_ratio=[4, 4, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_base_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+#
+# @register_model
+# def crossvit_9_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
+#                               num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_9_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+#
+# @register_model
+# def crossvit_15_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
+#                               num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_15_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+#
+# @register_model
+# def crossvit_18_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
+#                               num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_18_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+#
+# @register_model
+# def crossvit_9_dagger_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[128, 256], depth=[[1, 3, 0], [1, 3, 0], [1, 3, 0]],
+#                               num_heads=[4, 4], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), multi_conv=True, **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_9_dagger_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+# @register_model
+# def crossvit_15_dagger_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
+#                               num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), multi_conv=True, **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_15_dagger_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+# @register_model
+# def crossvit_15_dagger_384(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[408, 384],
+#                               patch_size=[12, 16], embed_dim=[192, 384], depth=[[1, 5, 0], [1, 5, 0], [1, 5, 0]],
+#                               num_heads=[6, 6], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), multi_conv=True, **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_15_dagger_384'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+# @register_model
+# def crossvit_18_dagger_224(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[240, 224],
+#                               patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
+#                               num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), multi_conv=True, **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_18_dagger_224'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model
+#
+# @register_model
+# def crossvit_18_dagger_384(pretrained=False, **kwargs):
+#     model = VisionTransformer(img_size=[408, 384],
+#                               patch_size=[12, 16], embed_dim=[224, 448], depth=[[1, 6, 0], [1, 6, 0], [1, 6, 0]],
+#                               num_heads=[7, 7], mlp_ratio=[3, 3, 1], qkv_bias=True,
+#                               norm_layer=partial(nn.LayerNorm, eps=1e-6), multi_conv=True, **kwargs)
+#     model.default_cfg = _cfg()
+#     if pretrained:
+#         state_dict = torch.hub.load_state_dict_from_url(_model_urls['crossvit_18_dagger_384'], map_location='cpu')
+#         model.load_state_dict(state_dict)
+#     return model

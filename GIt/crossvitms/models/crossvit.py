@@ -3,7 +3,7 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.numpy as np
 
-from Block import Block
+from models.Block import Block
 from Identity import Identity
 from drop_path import DropPath
 from helpers import to_2tuple
